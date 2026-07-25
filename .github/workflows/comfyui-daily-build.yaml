@@ -13,10 +13,44 @@ jobs:
       matrix:
         cuda_version: [ "13.0-cudnn9" ]
     steps:
+      - name: Aggressive cleanup
+        run: |
+          # Remove Java (JDKs)
+          # sudo rm -rf /usr/lib/jvm
+
+          # Remove .NET SDKs
+          # sudo rm -rf /usr/share/dotnet
+
+          # Remove Swift toolchain
+          sudo rm -rf /usr/share/swift
+
+          # Remove Haskell (GHC)
+          sudo rm -rf /usr/local/.ghcup
+
+          # Remove Julia
+          sudo rm -rf /usr/local/julia*
+
+          # Remove Android SDKs
+          sudo rm -rf /usr/local/lib/android
+
+          # Remove Chromium (optional if not using for browser tests)
+          # sudo rm -rf /usr/local/share/chromium
+
+          # Remove Microsoft/Edge and Google Chrome builds
+          # sudo rm -rf /opt/microsoft /opt/google
+
+          # Remove Azure CLI
+          # sudo rm -rf /opt/az
+
+          # Remove PowerShell
+          # sudo rm -rf /usr/local/share/powershell
+
+          # Remove CodeQL and other toolcaches
+          # sudo rm -rf /opt/hostedtoolcache
+          
+          df -h
       - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          ref: nvidia-sm120
       - name: Install yq
         run: |
           wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
@@ -32,6 +66,6 @@ jobs:
           export COMFYUI_BRANCH="$(curl -L \
             -H "Accept: application/vnd.github+json" \
             'https://api.github.com/repos/Comfy-Org/ComfyUI/releases?per_page=1' | yq -r '.[0].tag_name')"
-          export COMFYUI_CUDA_VERSION='${{ matrix.rocm_version }}'
+          export COMFYUI_CUDA_VERSION='${{ matrix.cuda_version }}'
           export COMFYUI_PYTORCH_VERSION='2.11.0'
           ./build-and-push.comfyui.sh

@@ -46,6 +46,7 @@ RUN cmake -S . -B build \
         -DGGML_NATIVE=OFF             \
         -DCMAKE_CUDA_ARCHITECTURES="$CUDA_ARCH" \
         -DGGML_BACKEND_DL=ON          \
+        -DGGML_RPC=ON                 \
         -DGGML_CPU_ALL_VARIANTS=ON    \
         -DGGML_AVX512=ON              \
         -DGGML_AVX512_VBMI=ON         \

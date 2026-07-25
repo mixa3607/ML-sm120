@@ -1,4 +1,4 @@
-ARG BASE_PYTORCH_IMAGE="docker.io/mixa3607/pytorch-gfx906:v2.7.1-rocm-6.3.3"
+ARG BASE_PYTORCH_IMAGE="docker.io/pytorch/pytorch:v2.7.1-cuda13.0-cudnn9-runtime"
 
 ARG COMFY_REPO="https://github.com/Comfy-Org/ComfyUI.git"
 ARG COMFY_BRANCH="master"
