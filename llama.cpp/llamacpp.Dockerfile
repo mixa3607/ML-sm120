@@ -1,4 +1,4 @@
-ARG BASE_CUDA_IMAGE=""
+ARG BASE_CUDA_IMAGE="nvidia/cuda:13.3.0-cudnn-devel-ubuntu24.04"
 ARG CUDA_ARCH="120"
 
 ARG LLAMACPP_REPO="https://github.com/ggml-org/llama.cpp.git"

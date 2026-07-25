@@ -27,7 +27,7 @@ done
 
 mkdir -p ./logs || true
 docker buildx build ${DOCKER_EXTRA_ARGS[@]} --push \
-  --build-arg BASE_CUDA_IMAGE=${LLAMA_CUDA_IMAGE}:${LLAMA_CUDA_VERSION}-devel-ubuntu22.04 \
+  --build-arg BASE_CUDA_IMAGE=${LLAMA_CUDA_IMAGE}:${LLAMA_CUDA_VERSION}-devel-ubuntu24.04 \
   --build-arg LLAMACPP_REPO=$LLAMA_REPO \
   --build-arg LLAMACPP_BRANCH=$LLAMA_BRANCH \
   --build-arg LLAMACPP_COMMIT=$LLAMA_COMMIT \

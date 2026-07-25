@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        cuda_version: [ "13.0-cudnn9" ]
+        cuda_version: [ "13.3.0-cudnn" ]
     steps:
       - name: Aggressive cleanup
         run: |
