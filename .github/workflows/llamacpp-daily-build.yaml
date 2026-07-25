@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        rocm_version: [ "6.3.3", "7.2.1" ]
+        cuda_version: [ "13.0-cudnn9" ]
     steps:
       - name: Aggressive cleanup
         run: |
