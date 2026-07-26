@@ -14,8 +14,8 @@
 | Project   | Image                                                                                                                             |
 | --------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | --------- | -----------------------------------------------------------                                                                       |
-| ComfyUI   | [`docker.io/mixa3607/comfyui-sm120:<ver>cuda-13.0-cudnn9`](https://hub.docker.com/r/mixa3607/comfyui-sm120/tags?name=cuda-13.0-cudnn9)\*     |
+| ComfyUI   | [`docker.io/mixa3607/comfyui-sm120:<ver>-cuda-13.2-cudnn9`](https://hub.docker.com/r/mixa3607/comfyui-sm120/tags)\*     |
 | --------- | -----------------------------------------------------------                                                                       |
-| llama.cpp | [`docker.io/mixa3607/llama.cpp-sm120:<ver>-cuda-13.0-cudnn9`](https://hub.docker.com/r/mixa3607/llama.cpp-sm120/tags?name=cuda-13.0-cudnn9)\* |
+| llama.cpp | [`docker.io/mixa3607/llama.cpp-sm120:<ver>-cuda-13.3.0-cudnn`](https://hub.docker.com/r/mixa3607/llama.cpp-sm120/tags)\* |
 
 > \* llama.cpp and ComfyUI have daily builds. See last tag on dockerhub
