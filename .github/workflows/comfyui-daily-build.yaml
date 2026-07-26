@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         cuda_version: [ "13.0-cudnn9" ]
+        torch_version: [ "2.13.0" ]
     steps:
       - name: Aggressive cleanup
         run: |
@@ -67,5 +68,5 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             'https://api.github.com/repos/Comfy-Org/ComfyUI/releases?per_page=1' | yq -r '.[0].tag_name')"
           export COMFYUI_CUDA_VERSION='${{ matrix.cuda_version }}'
-          export COMFYUI_PYTORCH_VERSION='2.11.0'
+          export COMFYUI_PYTORCH_VERSION='${{ matrix.torch_version }}'
           ./build-and-push.comfyui.sh
