@@ -5,6 +5,8 @@ ARG LLAMACPP_REPO="https://github.com/ggml-org/llama.cpp.git"
 ARG LLAMACPP_BRANCH="master"
 ARG LLAMACPP_COMMIT=""
 ARG LLAMACPP_CODE_PATH=""
+ARG LLAMACPP_PATCH="empty.patch"
+ARG CCACHE_MAXSIZE="2G"
 
 ############# Base image #############
 FROM ${BASE_CUDA_IMAGE} AS cuda_base
@@ -17,17 +19,30 @@ RUN apt-get update && \
 ARG CUDA_ARCH
 ENV CUDA_ARCH=${CUDA_ARCH}
 
-############# Clone repos #############
+############# Prepare code #############
 FROM cuda_base AS files_llamacpp
 ARG LLAMACPP_REPO
 ARG LLAMACPP_BRANCH
 ARG LLAMACPP_COMMIT
 ARG LLAMACPP_CODE_PATH
+ARG LLAMACPP_PATCH
+
 # Clone
 WORKDIR /files/llamacpp
-RUN git clone --depth 1 --recurse-submodules --shallow-submodules --jobs 4 --branch ${LLAMACPP_BRANCH} ${LLAMACPP_REPO} .
-RUN if [ "$LLAMACPP_COMMIT" != "" ]; then git checkout "$LLAMACPP_COMMIT"; fi
-RUN if [ "$LLAMACPP_CODE_PATH" != "" ]; then cd "$LLAMACPP_CODE_PATH" && find ./ -maxdepth 1 -mindepth 1 -exec mv -t /files/llamacpp {} + ; fi
+RUN <<EOF_DOCKERFILE bash
+set -eo pipefail
+git clone --depth 1 --recurse-submodules --shallow-submodules --jobs 4 --branch ${LLAMACPP_BRANCH} ${LLAMACPP_REPO} .
+if [ "$LLAMACPP_COMMIT" != "" ]; then
+  git checkout "$LLAMACPP_COMMIT"
+fi
+if [ "$LLAMACPP_CODE_PATH" != "" ]; then
+  cd "$LLAMACPP_CODE_PATH" && find ./ -maxdepth 1 -mindepth 1 -exec mv -t /files/llamacpp {} +
+fi
+EOF_DOCKERFILE
+
+# patch
+COPY ./patch/${LLAMACPP_PATCH} ./${LLAMACPP_PATCH}
+RUN git apply ./${LLAMACPP_PATCH} --allow-empty && rm ./${LLAMACPP_PATCH}
 
 FROM files_llamacpp AS files_llamacpp_python
 WORKDIR /files/llamacpp-python
@@ -36,25 +51,43 @@ RUN find .
 
 ############# Build #############
 FROM cuda_base AS build_llamacpp
-RUN apt-get install -y build-essential cmake libssl-dev
+ARG CCACHE_MAXSIZE
+RUN apt-get install -y build-essential cmake libssl-dev ccache
 COPY --from=files_llamacpp /files/llamacpp /build/llamacpp
 WORKDIR /build/llamacpp
 
+ENV CCACHE_DIR=/ccache
+ENV CCACHE_MAXSIZE=${CCACHE_MAXSIZE}
+
 # https://github.com/ggml-org/llama.cpp/blob/a6206958d28a064564ef132091b9c617ae005f49/ggml/CMakeLists.txt#L221
-RUN cmake -S . -B build \
-        -DGGML_CUDA=ON                \
-        -DGGML_NATIVE=OFF             \
-        -DCMAKE_CUDA_ARCHITECTURES="$CUDA_ARCH" \
-        -DGGML_BACKEND_DL=ON          \
-        -DGGML_RPC=ON                 \
-        -DGGML_CPU_ALL_VARIANTS=ON    \
-        -DGGML_AVX512=ON              \
-        -DGGML_AVX512_VBMI=ON         \
-        -DGGML_AVX512_VNNI=ON         \
-        -DGGML_AVX512_BF16=ON         \
-        -DCMAKE_BUILD_TYPE=Release    \
-        -DLLAMA_BUILD_TESTS=OFF       \
-    && cmake --build build --config Release -j$(nproc)
+RUN --mount=type=cache,target=/ccache <<EOF_DOCKERFILE bash
+set -eo pipefail
+
+CMAKE_ARGS=(
+  # BASICS
+  -DCMAKE_BUILD_TYPE=Release
+  -DLLAMA_BUILD_TESTS=OFF
+  # CCACHE
+  -DCMAKE_C_COMPILER_LAUNCHER=ccache
+  -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+  # BACKEND
+  -DGGML_CUDA=ON
+  -DGGML_NATIVE=OFF
+  -DCMAKE_CUDA_ARCHITECTURES="${CUDA_ARCH}"
+  -DGGML_BACKEND_DL=ON
+  # BACKEND: RPC
+  -DGGML_RPC=ON
+  # BACKEND: CPU
+  -DGGML_CPU_ALL_VARIANTS=ON
+  -DGGML_AVX512=ON
+  -DGGML_AVX512_VBMI=ON
+  -DGGML_AVX512_VNNI=ON
+  -DGGML_AVX512_BF16=ON
+)
+
+cmake -S . -B build "\${CMAKE_ARGS[@]}"
+cmake --build build --config Release -j$(nproc)
+EOF_DOCKERFILE
 RUN mkdir -p /builded && cp -r ./build/bin/* .devops/tools.sh /builded
 
 ############# Copy and install all #############

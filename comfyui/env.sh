@@ -10,10 +10,10 @@ if [ "$COMFYUI_TORCH_IMAGE" == "" ]; then
   COMFYUI_TORCH_IMAGE="docker.io/pytorch/pytorch"
 fi
 if [ "$COMFYUI_CUDA_VERSION" == "" ]; then
-  COMFYUI_CUDA_VERSION="13.0-cudnn9"
+  COMFYUI_CUDA_VERSION="13.2-cudnn9"
 fi
 if [ "$COMFYUI_PYTORCH_VERSION" == "" ]; then
-  COMFYUI_PYTORCH_VERSION="v2.7.1"
+  COMFYUI_PYTORCH_VERSION="2.13.0"
 fi
 
 if [ "$COMFYUI_REPO" == "" ]; then
@@ -24,6 +24,11 @@ if [ "$COMFYUI_BRANCH" == "" ]; then
 fi
 if [ "$COMFYUI_COMMIT" == "" ]; then
   COMFYUI_COMMIT=""
+fi
+
+# push image
+if [ "$COMFYUI_PUSH" == "" ]; then
+  COMFYUI_PUSH="1"
 fi
 
 popd
