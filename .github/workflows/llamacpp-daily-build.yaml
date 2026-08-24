@@ -18,9 +18,12 @@ jobs:
         build:
           - cuda_version: "13.3.0-cudnn"
             llamacpp_tag: "${{ inputs.llamacpp_tag }}"
+            release_tag: "20260825002436"
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
+        with:
+          ref: ${{ matrix.build.release_tag }}
 
       - name: Aggressive cleanup
         uses: ./.github/workflows/actions/cleanup-space-action
