@@ -44,11 +44,11 @@ docker run --rm \
 
 Environment variables:
 
-| Variable           | Description                                                                 |
-| ------------------ | --------------------------------------------------------------------------- |
-| `PERSISTENCE_PATH` | Copy `models`, `custom_nodes`, `input`, `output` there; use it as `--base-directory` and store the SQLite DB |
+| Variable           | Description                                                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `PERSISTENCE_PATH` | Copy `models`, `custom_nodes`, `input`, `output` there; use it as `--base-directory` and store the SQLite DB                    |
 | `VENV_NAME`        | Create/activate a virtual environment (with `--system-site-packages`) at `/data/<venv>` (with persistence) or `/comfyui/<venv>` |
-| `BOOTSTRAP_ONLY`   | Set to `1` to only prepare persistence/venv and exit without starting ComfyUI |
+| `BOOTSTRAP_ONLY`   | Set to `1` to only prepare persistence/venv and exit without starting ComfyUI                                                   |
 
 Behavior:
 
@@ -74,8 +74,8 @@ The build happens inside `docker buildx` on top of the official PyTorch base
 image (`docker.io/pytorch/pytorch:<torch>-cuda<cuda>-runtime`) and produces
 the ComfyUI image.
 
-| Artifact | Script                      | Dockerfile               |
-| -------- | --------------------------- | ------------------------ |
+| Artifact | Script                      | Dockerfile                 |
+| -------- | --------------------------- | -------------------------- |
 | Image    | `./build-and-push.image.sh` | `./build-image.Dockerfile` |
 
 ### Prerequisites
@@ -100,20 +100,20 @@ To update the preset to the latest ComfyUI release, run `./upd2last-release.sh`.
 Defaults come from [`env.sh`](./env.sh) and [`../env.sh`](../env.sh). Export
 any variable to override it.
 
-| Variable                  | Default                               | Description                                  |
-| ------------------------- | ------------------------------------- | -------------------------------------------- |
-| `COMFYUI_IMAGE`           | `docker.io/mixa3607/comfyui-sm120`    | Destination image name                       |
-| `COMFYUI_TORCH_IMAGE`     | `docker.io/pytorch/pytorch`           | PyTorch base image name                      |
-| `COMFYUI_CUDA_VERSION`    | `13.2-cudnn9`                         | CUDA version of the base image               |
-| `COMFYUI_PYTORCH_VERSION` | `2.13.0`                              | PyTorch version of the base image            |
-| `COMFYUI_REPO`            | `https://github.com/Comfy-Org/ComfyUI.git` | ComfyUI git repository                |
-| `COMFYUI_BRANCH`          | `master`                              | ComfyUI git tag/branch to build              |
-| `COMFYUI_COMMIT`          | *(empty)*                             | Pin a specific commit (on top of the branch) |
-| `SAGEATTENTION_REPO`      | `https://github.com/thu-ml/SageAttention.git` | SageAttention git repository |
-| `SAGEATTENTION_REF`       | `v2.2.0`                              | SageAttention git tag/branch for both wheels (`sm120`) |
-| `COMFYUI_PUSH`            | `1`                                   | Push the image to the registry               |
-| `COMFYUI_FORCE_BUILD`     | *(unset)*                             | Set to `1` to rebuild even if the tag exists |
-| `REPO_GIT_REF`            | *(git tag, else short SHA)*           | Build revision appended to the tag           |
+| Variable                  | Default                                       | Description                                            |
+| ------------------------- | --------------------------------------------- | ------------------------------------------------------ |
+| `COMFYUI_IMAGE`           | `docker.io/mixa3607/comfyui-sm120`            | Destination image name                                 |
+| `COMFYUI_TORCH_IMAGE`     | `docker.io/pytorch/pytorch`                   | PyTorch base image name                                |
+| `COMFYUI_CUDA_VERSION`    | `13.2-cudnn9`                                 | CUDA version of the base image                         |
+| `COMFYUI_PYTORCH_VERSION` | `2.13.0`                                      | PyTorch version of the base image                      |
+| `COMFYUI_REPO`            | `https://github.com/Comfy-Org/ComfyUI.git`    | ComfyUI git repository                                 |
+| `COMFYUI_BRANCH`          | `master`                                      | ComfyUI git tag/branch to build                        |
+| `COMFYUI_COMMIT`          | _(empty)_                                     | Pin a specific commit (on top of the branch)           |
+| `SAGEATTENTION_REPO`      | `https://github.com/thu-ml/SageAttention.git` | SageAttention git repository                           |
+| `SAGEATTENTION_REF`       | `v2.2.0`                                      | SageAttention git tag/branch for both wheels (`sm120`) |
+| `COMFYUI_PUSH`            | `1`                                           | Push the image to the registry                         |
+| `COMFYUI_FORCE_BUILD`     | _(unset)_                                     | Set to `1` to rebuild even if the tag exists           |
+| `REPO_GIT_REF`            | _(git tag, else short SHA)_                   | Build revision appended to the tag                     |
 
 The base image is resolved as
 `$COMFYUI_TORCH_IMAGE:$COMFYUI_PYTORCH_VERSION-cuda$COMFYUI_CUDA_VERSION-runtime`
