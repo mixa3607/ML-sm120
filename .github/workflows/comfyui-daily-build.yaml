@@ -19,7 +19,7 @@ jobs:
           - cuda_version: "13.2-cudnn9"
             pytorch_version: "2.14.1"
             comfyui_tag: "${{ inputs.comfyui_tag }}"
-            release_tag: "20260825002436"
+            release_tag: "20261003163732"
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
