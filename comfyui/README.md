@@ -16,6 +16,10 @@ flowchart LR
 
 `ComfyUI` is cloned from the upstream repo at build time (pinned to a git tag),
 so the PyTorch/CUDA versions are fixed per image tag.
+The image also builds [SageAttention](https://github.com/thu-ml/SageAttention)
+2/2++ and SageAttention 3 for `sm120` from the same source ref, and installs
+both wheels (`sageattention` and `sageattn3`). The CUDA toolkit is used only
+during the build; the final image remains based on the PyTorch runtime.
 
 ## Prebuilt images
 
@@ -53,6 +57,10 @@ Behavior:
   (`sqlite:///<PERSISTENCE_PATH>/database/comfyui.db`) are persisted to the
   mounted volume
 - Additional CLI args can be appended to the `docker run` command
+- To use the installed SageAttention backend, append `--use-sage-attention`
+  to the `docker run` command (ComfyUI does not enable it by default). This
+  selects SageAttention 2/2++; SageAttention 3 requires separate model/node
+  integration using `sageattn3.sageattn3_blackwell`.
 
 Also see https://github.com/hartmark/sd-rocm/blob/main/docker-compose.yml
 
@@ -101,6 +109,8 @@ any variable to override it.
 | `COMFYUI_REPO`            | `https://github.com/Comfy-Org/ComfyUI.git` | ComfyUI git repository                |
 | `COMFYUI_BRANCH`          | `master`                              | ComfyUI git tag/branch to build              |
 | `COMFYUI_COMMIT`          | *(empty)*                             | Pin a specific commit (on top of the branch) |
+| `SAGEATTENTION_REPO`      | `https://github.com/thu-ml/SageAttention.git` | SageAttention git repository |
+| `SAGEATTENTION_REF`       | `v2.2.0`                              | SageAttention git tag/branch for both wheels (`sm120`) |
 | `COMFYUI_PUSH`            | `1`                                   | Push the image to the registry               |
 | `COMFYUI_FORCE_BUILD`     | *(unset)*                             | Set to `1` to rebuild even if the tag exists |
 | `REPO_GIT_REF`            | *(git tag, else short SHA)*           | Build revision appended to the tag           |
@@ -108,6 +118,10 @@ any variable to override it.
 The base image is resolved as
 `$COMFYUI_TORCH_IMAGE:$COMFYUI_PYTORCH_VERSION-cuda$COMFYUI_CUDA_VERSION-runtime`
 (e.g. `docker.io/pytorch/pytorch:2.13.0-cuda13.2-cudnn9-runtime`).
+The SageAttention build stage adds NVIDIA's CUDA APT repository to install
+the matching toolkit (e.g. `cuda-toolkit-13-2` for CUDA 13.2). No GPU is
+required on the build host.
+SageAttention 3 fetches NVIDIA CUTLASS during its source build.
 
 ### Build the image
 

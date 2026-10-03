@@ -26,6 +26,13 @@ if [ "$COMFYUI_COMMIT" == "" ]; then
   COMFYUI_COMMIT=""
 fi
 
+if [ "$SAGEATTENTION_REPO" == "" ]; then
+  SAGEATTENTION_REPO="https://github.com/thu-ml/SageAttention.git"
+fi
+if [ "$SAGEATTENTION_REF" == "" ]; then
+  SAGEATTENTION_REF="v2.2.0"
+fi
+
 # push image
 if [ "$COMFYUI_PUSH" == "" ]; then
   COMFYUI_PUSH="1"

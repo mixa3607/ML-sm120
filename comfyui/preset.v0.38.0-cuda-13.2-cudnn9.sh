@@ -1,0 +1,5 @@
+#!/bin/bash
+
+export COMFYUI_CUDA_VERSION='13.2-cudnn9'
+export COMFYUI_PYTORCH_VERSION='2.14.1'
+export COMFYUI_BRANCH='v0.38.0'
