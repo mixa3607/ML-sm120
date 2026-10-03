@@ -45,7 +45,7 @@ RUN git clone --depth 1 --branch ${SAGEATTENTION_REF} ${SAGEATTENTION_REPO} .
 RUN sed -i 's/-std=c++17/-std=c++20/g' setup.py sageattention3_blackwell/setup.py
 # SageAttention defaults MAX_JOBS to 32, which can exhaust memory on hosted CI runners.
 ENV TORCH_CUDA_ARCH_LIST="12.0" CUDA_HOME="/usr/local/cuda" MAX_JOBS="2" EXT_PARALLEL="1"
-RUN python3 -m pip wheel --verbose --no-deps --no-build-isolation --wheel-dir /wheels .
+RUN python3 -m pip wheel --no-deps --no-build-isolation --wheel-dir /wheels .
 WORKDIR /files/sageattention/sageattention3_blackwell
 # SageAttention3's setup.py probes the local GPU; select sm120 without requiring a GPU on the builder.
 # The CUDA driver stubs are needed to link its two extensions against libcuda.
