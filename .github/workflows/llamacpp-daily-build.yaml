@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         build:
-          - cuda_version: "13.3.0-cudnn"
+          - cuda_version: "13.4.2-cudnn"
             llamacpp_tag: "${{ inputs.llamacpp_tag }}"
             release_tag: "20260825002436"
     steps:
