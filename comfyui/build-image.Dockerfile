@@ -43,8 +43,9 @@ WORKDIR /files/sageattention
 RUN git clone --depth 1 --branch ${SAGEATTENTION_REF} ${SAGEATTENTION_REPO} .
 # SageAttention v2.2.0 hardcodes C++17, while PyTorch 2.14 headers require C++20.
 RUN sed -i 's/-std=c++17/-std=c++20/g' setup.py sageattention3_blackwell/setup.py
-ENV TORCH_CUDA_ARCH_LIST="12.0" CUDA_HOME="/usr/local/cuda" EXT_PARALLEL="1"
-RUN python3 -m pip wheel --no-deps --no-build-isolation --wheel-dir /wheels .
+# SageAttention defaults MAX_JOBS to 32, which can exhaust memory on hosted CI runners.
+ENV TORCH_CUDA_ARCH_LIST="12.0" CUDA_HOME="/usr/local/cuda" MAX_JOBS="2" EXT_PARALLEL="1"
+RUN python3 -m pip wheel --verbose --no-deps --no-build-isolation --wheel-dir /wheels .
 WORKDIR /files/sageattention/sageattention3_blackwell
 # SageAttention3's setup.py probes the local GPU; select sm120 without requiring a GPU on the builder.
 # The CUDA driver stubs are needed to link its two extensions against libcuda.
@@ -56,7 +57,11 @@ RUN LIBRARY_PATH="/usr/local/cuda/lib64/stubs:/usr/local/cuda/targets/x86_64-lin
 FROM torch_base AS final
 WORKDIR /comfyui
 COPY --from=files_comfy_requirements /files/comfy-requirements /comfyui
-RUN pip install huggingface_hub modelscope yq einops ninja -r requirements.txt -r manager_requirements.txt
+# The PyTorch base includes spin (a development CLI), which requires click<8.4;
+# huggingface_hub requires click>=8.4.2. Neither ComfyUI nor SageAttention needs spin.
+RUN pip uninstall -y spin && \
+    pip install huggingface_hub modelscope yq einops ninja -r requirements.txt -r manager_requirements.txt && \
+    pip check
 COPY --from=sageattention_builder /wheels /wheels
 RUN pip install --no-deps /wheels/sageattention-*.whl /wheels/sageattn3-*.whl && rm -rf /wheels
 COPY --from=files_comfy /files/comfy /comfyui
