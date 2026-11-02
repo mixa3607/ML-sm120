@@ -32,7 +32,7 @@ jobs:
             profile_suffix: ""
             cuda_version: "13.4.2-cudnn"
     env:
-      BUILD_REF: "20261003182245"
+      BUILD_REF: "20261103021820"
       LLAMA_REPO: "${{ matrix.build.repo }}"
       LLAMA_LATEST_TYPE: "${{ matrix.build.latest_type }}"
       LLAMA_CUDA_VERSION: "${{ matrix.build.cuda_version }}"
