@@ -16,12 +16,44 @@ docker run --rm --gpus all -p 8188:8188 \
 | Variable           | Effect                                                                                                               |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------- |
 | `PERSISTENCE_PATH` | Copy `models`, `custom_nodes`, `input`, `output` here; use as `--base-directory`; SQLite DB at `database/comfyui.db` |
-| `VENV_NAME`        | Venv with `--system-site-packages` at `$PERSISTENCE_PATH/$VENV_NAME`, or `/comfyui/$VENV_NAME` without persistence   |
+| `VENV_NAME`        | Venv with `--system-site-packages` at `$PERSISTENCE_PATH/$VENV_NAME`, or `/opt/comfyui/$VENV_NAME` without persistence |
 | `BOOTSTRAP_ONLY=1` | Prepare persistence/venv without starting ComfyUI                                                                    |
+| `COMFYMANAGER_<key>` | Set `<key>` in the Manager's `[default]` configuration section before startup; overrides the saved value |
+| `COMFYMANAGER_use_uv` | `False`; use pip so dependencies already available through system site-packages are reused |
+| `COMFYMANAGER_use_unified_resolver` | `False`; disable the Manager's uv-based batch resolver |
+
+ComfyUI is installed at `/opt/comfyui`. The image sets `LANG=C.UTF-8` and
+`LC_ALL=C.UTF-8`.
+
+Manager overrides are also applied with `BOOTSTRAP_ONLY=1`. The configuration
+is at `$PERSISTENCE_PATH/user/__manager/config.ini`, or
+`/opt/comfyui/user/__manager/config.ini` without persistence. Explicit
+`--base-directory` and `--user-directory` arguments are respected. Other saved
+configuration values are retained. For example, `COMFYMANAGER_network_mode=offline`
+sets `network_mode = offline`.
 
 The entrypoint adds `--enable-manager`. `--use-sage-attention` selects
 SageAttention 2/2++; SageAttention 3 requires model/node integration through
 `sageattn3.sageattn3_blackwell`.
+
+### GPU dependency constraints
+
+The image generates `/opt/comfyui/gpu-constraints.txt` from installed package
+metadata, preserving full versions including CUDA suffixes. It pins Torch,
+TorchVision, TorchAudio, Triton, installed `nvidia-*` / `cuda-*` packages, and
+the SageAttention extensions. The base stack is constrained before installing
+ComfyUI dependencies and checked again after installing SageAttention.
+
+Both `PIP_CONSTRAINT` and `UV_CONSTRAINT` include this file; the entrypoint
+also retains additional constraint files supplied through these variables.
+Incompatible plugin requirements fail resolution instead of replacing the GPU
+stack. Other dependencies can still be installed in the venv. Constraints are
+not a sandbox: plugin installers can bypass them. Enabling `use_uv` again can
+still duplicate system packages, even with pinned versions.
+
+Existing persistent venvs are not cleaned or migrated automatically. If one
+already shadows the image's GPU packages, use a new `VENV_NAME` and reinstall
+the custom-node dependencies, keeping the old environment for rollback.
 
 ## Build
 
@@ -63,3 +95,16 @@ Release tags (`COMFYUI_IS_RELEASE=1`), omitting the `COMFYUI_` variable prefix:
 Otherwise: `$BRANCH-torch-$PYTORCH_VERSION-cuda-$CUDA_VERSION-$REPO_GIT_REF-pre`.
 
 Registry overrides: [`../.build/.env-local.sh`](../.build/.env-local.sh).
+
+## Tests
+
+From the repository root:
+
+```bash
+python3 -B -m unittest discover -s comfyui/tests -v
+bash -n comfyui/build-context/entrypoint.sh comfyui/build-and-push.image.sh
+```
+
+These CPU-only checks cover Manager configuration, bootstrap paths, generated
+constraints, and offline pip resolution with lightweight fake package metadata.
+They do not validate GPU runtime compatibility.

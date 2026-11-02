@@ -1,6 +1,15 @@
 #!/bin/bash
 set -e
 
+cd /opt/comfyui
+
+for constraint_var in PIP_CONSTRAINT UV_CONSTRAINT; do
+  extra_constraints="${!constraint_var}"
+  if [ "$extra_constraints" != "/opt/comfyui/gpu-constraints.txt" ]; then
+    export "$constraint_var=/opt/comfyui/gpu-constraints.txt${extra_constraints:+ $extra_constraints}"
+  fi
+done
+
 EXTRA_ARGS=()
 EXTRA_ARGS+=("--enable-manager")
 
@@ -32,6 +41,8 @@ if [ "$VENV_NAME" != "" ]; then
   echo "Activating venv"
   source "$VENV_ROOT/bin/activate"
 fi
+
+python3 ./runtime_config.py manager "${EXTRA_ARGS[@]}" "$@"
 
 if [ "$BOOTSTRAP_ONLY" == "1" ]; then
   echo "Warning: BOOTSTRAP_ONLY is set to 1. Just exit"

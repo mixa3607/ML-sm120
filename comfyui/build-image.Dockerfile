@@ -9,8 +9,13 @@ ARG CUDA_TOOLKIT_PACKAGE="cuda-toolkit-13-2"
 
 ############# Base image #############
 FROM ${BASE_PYTORCH_IMAGE} AS torch_base
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 RUN python3 -m pip config set global.break-system-packages true && \
     apt-get update && apt-get install git curl wget jq aria2 python3-venv -y
+COPY /runtime_config.py /opt/comfyui/runtime_config.py
+RUN python3 /opt/comfyui/runtime_config.py constraints /opt/comfyui/gpu-constraints.txt
+ENV PIP_CONSTRAINT=/opt/comfyui/gpu-constraints.txt \
+    UV_CONSTRAINT=/opt/comfyui/gpu-constraints.txt
 
 ############# Clone repos #############
 FROM torch_base AS files_comfy
@@ -55,14 +60,16 @@ RUN LIBRARY_PATH="/usr/local/cuda/lib64/stubs:/usr/local/cuda/targets/x86_64-lin
 
 ############# Copy and install all #############
 FROM torch_base AS final
-WORKDIR /comfyui
-COPY --from=files_comfy_requirements /files/comfy-requirements /comfyui
+ENV COMFYMANAGER_use_uv=False COMFYMANAGER_use_unified_resolver=False
+WORKDIR /opt/comfyui
+COPY --from=files_comfy_requirements /files/comfy-requirements /opt/comfyui
 # The PyTorch base includes spin (a development CLI), which requires click<8.4;
 # huggingface_hub requires click>=8.4.2. Neither ComfyUI nor SageAttention needs spin.
 RUN pip uninstall -y spin && \
     pip install huggingface_hub modelscope yq einops ninja -r requirements.txt -r manager_requirements.txt && \
     pip check
 COPY --from=sageattention_builder /wheels /wheels
-RUN pip install --no-deps /wheels/sageattention-*.whl /wheels/sageattn3-*.whl && rm -rf /wheels
-COPY --from=files_comfy /files/comfy /comfyui
-ENTRYPOINT ["/comfyui/entrypoint.sh"]
+RUN pip install --no-deps /wheels/sageattention-*.whl /wheels/sageattn3-*.whl && rm -rf /wheels && \
+    python3 /opt/comfyui/runtime_config.py constraints /opt/comfyui/gpu-constraints.txt
+COPY --from=files_comfy /files/comfy /opt/comfyui
+ENTRYPOINT ["/opt/comfyui/entrypoint.sh"]
