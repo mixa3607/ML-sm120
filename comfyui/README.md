@@ -1,163 +1,65 @@
 # ComfyUI SM120
 
-The most powerful and modular diffusion model GUI, API and backend with a
-graph/nodes interface. https://github.com/Comfy-Org/ComfyUI
+[ComfyUI](https://github.com/Comfy-Org/ComfyUI) with SageAttention 2/2++
+(`sageattention`) and SageAttention 3 (`sageattn3`) built for `sm_120`.
 
-All images are built for the `sm120` (NVIDIA Blackwell) GPU architecture.
-
-## Dependencies
-
-The image is built on top of the official [PyTorch image](https://hub.docker.com/r/pytorch/pytorch):
-
-```mermaid
-flowchart LR
-  torch[docker.io/pytorch/pytorch] --> comfyui[docker.io/mixa3607/comfyui-sm120]
-```
-
-`ComfyUI` is cloned from the upstream repo at build time (pinned to a git tag),
-so the PyTorch/CUDA versions are fixed per image tag.
-The image also builds [SageAttention](https://github.com/thu-ml/SageAttention)
-2/2++ and SageAttention 3 for `sm120` from the same source ref, and installs
-both wheels (`sageattention` and `sageattn3`). The CUDA toolkit is used only
-during the build; the final image remains based on the PyTorch runtime.
-
-## Prebuilt images
-
-- [`docker.io/mixa3607/comfyui-sm120:<ver>-cuda-13.2-cudnn9`](https://hub.docker.com/r/mixa3607/comfyui-sm120/tags?name=cuda-13.2)\*
-
-> \* have daily builds. See last tag on Docker Hub.
+Images: [docker.io/mixa3607/comfyui-sm120](https://hub.docker.com/r/mixa3607/comfyui-sm120/tags).
 
 ## Run
 
-### Docker
-
-The image needs NVIDIA GPU access. Example:
-
 ```bash
-docker run --rm \
-  --gpus all \
-  -p 8188:8188 \
-  -e PERSISTENCE_PATH=/data \
-  -v $(pwd)/data:/data \
-  docker.io/mixa3607/comfyui-sm120:<ver>-cuda-13.2-cudnn9
+docker run --rm --gpus all -p 8188:8188 \
+  -e PERSISTENCE_PATH=/data -v "$(pwd)/data:/data" \
+  docker.io/mixa3607/comfyui-sm120:<tag> --use-sage-attention
 ```
 
-Environment variables:
+| Variable           | Effect                                                                                                               |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `PERSISTENCE_PATH` | Copy `models`, `custom_nodes`, `input`, `output` here; use as `--base-directory`; SQLite DB at `database/comfyui.db` |
+| `VENV_NAME`        | Venv with `--system-site-packages` at `$PERSISTENCE_PATH/$VENV_NAME`, or `/comfyui/$VENV_NAME` without persistence   |
+| `BOOTSTRAP_ONLY=1` | Prepare persistence/venv without starting ComfyUI                                                                    |
 
-| Variable           | Description                                                                                                                     |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| `PERSISTENCE_PATH` | Copy `models`, `custom_nodes`, `input`, `output` there; use it as `--base-directory` and store the SQLite DB                    |
-| `VENV_NAME`        | Create/activate a virtual environment (with `--system-site-packages`) at `/data/<venv>` (with persistence) or `/comfyui/<venv>` |
-| `BOOTSTRAP_ONLY`   | Set to `1` to only prepare persistence/venv and exit without starting ComfyUI                                                   |
+The entrypoint adds `--enable-manager`. `--use-sage-attention` selects
+SageAttention 2/2++; SageAttention 3 requires model/node integration through
+`sageattn3.sageattn3_blackwell`.
 
-Behavior:
-
-- Always runs with `--enable-manager`
-- With `PERSISTENCE_PATH` set, data and the SQLite database
-  (`sqlite:///<PERSISTENCE_PATH>/database/comfyui.db`) are persisted to the
-  mounted volume
-- Additional CLI args can be appended to the `docker run` command
-- To use the installed SageAttention backend, append `--use-sage-attention`
-  to the `docker run` command (ComfyUI does not enable it by default). This
-  selects SageAttention 2/2++; SageAttention 3 requires separate model/node
-  integration using `sageattn3.sageattn3_blackwell`.
-
-Also see https://github.com/hartmark/sd-rocm/blob/main/docker-compose.yml
-
-### Kubernetes
-
-Helm chart and samples: [mixa3607 charts](https://github.com/mixa3607/charts)
-
-## Build from source
-
-The build happens inside `docker buildx` on top of the official PyTorch base
-image (`docker.io/pytorch/pytorch:<torch>-cuda<cuda>-runtime`) and produces
-the ComfyUI image.
-
-| Artifact | Script                      | Dockerfile                 |
-| -------- | --------------------------- | -------------------------- |
-| Image    | `./build-and-push.image.sh` | `./build-image.Dockerfile` |
-
-### Prerequisites
-
-- Docker with the `buildx` plugin
-- Access to the PyTorch base image
-
-### Presets
-
-Preset files set the ComfyUI, PyTorch and CUDA versions. Source one, then run
-the build script:
+## Build
 
 ```bash
-. preset.v0.33.1-cuda-13.2-cudnn9.sh
-./build-and-push.image.sh
+COMFYUI_BRANCH=v0.38.0 COMFYUI_PUSH=0 ./build-and-push.image.sh
 ```
 
-To update the preset to the latest ComfyUI release, run `./upd2last-release.sh`.
+Defaults: [`build-and-push.image.sh`](./build-and-push.image.sh).
+Commands: [`check` / `build`](../.build/README.md).
 
-### Build variables
+| Variable                  | Default                                                                           |
+| ------------------------- | --------------------------------------------------------------------------------- |
+| `COMFYUI_IMAGE`           | `docker.io/mixa3607/comfyui-sm120`                                                |
+| `COMFYUI_TORCH_IMAGE`     | `docker.io/pytorch/pytorch`                                                       |
+| `COMFYUI_CUDA_VERSION`    | `13.2-cudnn9`                                                                     |
+| `COMFYUI_PYTORCH_VERSION` | `2.13.0`                                                                          |
+| `COMFYUI_BASE_IMAGE`      | `$COMFYUI_TORCH_IMAGE:$COMFYUI_PYTORCH_VERSION-cuda$COMFYUI_CUDA_VERSION-runtime` |
+| `COMFYUI_REPO`            | `https://github.com/Comfy-Org/ComfyUI.git`                                        |
+| `COMFYUI_BRANCH`          | `master`                                                                          |
+| `COMFYUI_COMMIT`          | empty                                                                             |
+| `SAGEATTENTION_REPO`      | `https://github.com/thu-ml/SageAttention.git`                                     |
+| `SAGEATTENTION_REF`       | `v2.2.0`, shared by both wheels                                                   |
+| `COMFYUI_IS_RELEASE`      | `0`                                                                               |
+| `COMFYUI_PUSH`            | `1`                                                                               |
+| `COMFYUI_FORCE_BUILD`     | unset; `1` forces rebuild                                                         |
+| `REPO_GIT_REF`            | git tag, otherwise short SHA                                                      |
 
-Defaults come from [`env.sh`](./env.sh) and [`../env.sh`](../env.sh). Export
-any variable to override it.
+SageAttention is built with the matching CUDA toolkit in a separate stage;
+the final image uses the PyTorch runtime base.
 
-| Variable                  | Default                                       | Description                                            |
-| ------------------------- | --------------------------------------------- | ------------------------------------------------------ |
-| `COMFYUI_IMAGE`           | `docker.io/mixa3607/comfyui-sm120`            | Destination image name                                 |
-| `COMFYUI_TORCH_IMAGE`     | `docker.io/pytorch/pytorch`                   | PyTorch base image name                                |
-| `COMFYUI_CUDA_VERSION`    | `13.2-cudnn9`                                 | CUDA version of the base image                         |
-| `COMFYUI_PYTORCH_VERSION` | `2.13.0`                                      | PyTorch version of the base image                      |
-| `COMFYUI_REPO`            | `https://github.com/Comfy-Org/ComfyUI.git`    | ComfyUI git repository                                 |
-| `COMFYUI_BRANCH`          | `master`                                      | ComfyUI git tag/branch to build                        |
-| `COMFYUI_COMMIT`          | _(empty)_                                     | Pin a specific commit (on top of the branch)           |
-| `SAGEATTENTION_REPO`      | `https://github.com/thu-ml/SageAttention.git` | SageAttention git repository                           |
-| `SAGEATTENTION_REF`       | `v2.2.0`                                      | SageAttention git tag/branch for both wheels (`sm120`) |
-| `COMFYUI_PUSH`            | `1`                                           | Push the image to the registry                         |
-| `COMFYUI_FORCE_BUILD`     | _(unset)_                                     | Set to `1` to rebuild even if the tag exists           |
-| `REPO_GIT_REF`            | _(git tag, else short SHA)_                   | Build revision appended to the tag                     |
+Release tags (`COMFYUI_IS_RELEASE=1`), omitting the `COMFYUI_` variable prefix:
 
-The base image is resolved as
-`$COMFYUI_TORCH_IMAGE:$COMFYUI_PYTORCH_VERSION-cuda$COMFYUI_CUDA_VERSION-runtime`
-(e.g. `docker.io/pytorch/pytorch:2.13.0-cuda13.2-cudnn9-runtime`).
-The SageAttention build stage adds NVIDIA's CUDA APT repository to install
-the matching toolkit (e.g. `cuda-toolkit-13-2` for CUDA 13.2). No GPU is
-required on the build host.
-SageAttention 3 fetches NVIDIA CUTLASS during its source build.
+- `$BRANCH-torch-$PYTORCH_VERSION-cuda-$CUDA_VERSION-$REPO_GIT_REF`
+- `$BRANCH-torch-$PYTORCH_VERSION-cuda-$CUDA_VERSION`
+- `$BRANCH-cuda-$CUDA_VERSION-$REPO_GIT_REF`
+- `$BRANCH-cuda-$CUDA_VERSION`
+- `latest-cuda-$CUDA_VERSION`
 
-### Build the image
+Otherwise: `$BRANCH-torch-$PYTORCH_VERSION-cuda-$CUDA_VERSION-$REPO_GIT_REF-pre`.
 
-```bash
-. preset.v0.33.1-cuda-13.2-cudnn9.sh
-./build-and-push.image.sh
-```
-
-Five tags are created:
-
-- `$COMFYUI_IMAGE:$BRANCH-torch-$PYTORCH_VERSION-cuda-$CUDA_VERSION-$REPO_GIT_REF` — pinned to the build revision
-- `$COMFYUI_IMAGE:$BRANCH-torch-$PYTORCH_VERSION-cuda-$CUDA_VERSION`
-- `$COMFYUI_IMAGE:$BRANCH-cuda-$CUDA_VERSION-$REPO_GIT_REF` — pinned to the build revision
-- `$COMFYUI_IMAGE:$BRANCH-cuda-$CUDA_VERSION`
-- `$COMFYUI_IMAGE:latest-cuda-$CUDA_VERSION`
-
-The build is skipped if the pinned tag is already in the registry, unless
-`COMFYUI_FORCE_BUILD=1`.
-
-The build log is saved to `./logs/build_<timestamp>.log`.
-
-### Push
-
-Set `COMFYUI_PUSH=0` to keep the image local (no `--push` passed to buildx).
-
-### Custom registry / local overrides
-
-Example:
-
-```bash
-export COMFYUI_CUDA_VERSION=13.2-cudnn9
-export COMFYUI_PYTORCH_VERSION=2.13.0
-export COMFYUI_BRANCH=v0.33.1
-export COMFYUI_IMAGE=registry.example.com/apps/comfyui-sm120
-export COMFYUI_TORCH_IMAGE=registry.example.com/apps/pytorch-sm120
-./build-and-push.image.sh
-```
-
-See [`../.env-local.sh`](../.env-local.sh) for a ready-made local override file.
+Registry overrides: [`../.build/.env-local.sh`](../.build/.env-local.sh).

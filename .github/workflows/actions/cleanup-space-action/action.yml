@@ -38,5 +38,5 @@ runs:
 
         # Remove CodeQL and other toolcaches
         # sudo rm -rf /opt/hostedtoolcache
-
+        
         df -h

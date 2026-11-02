@@ -1,10 +1,25 @@
-#/bin/bash
+#!/usr/bin/env bash
 set -eo pipefail
 
-cd $(dirname $0)
-source ../env.sh "llama.cpp"
+cd "$(dirname "$0")"
+source ../.build/git-common.sh
+source ../.build/logger.sh
+source ../.build/build-common.sh
 
-LLAMA_BASE_IMAGE="${LLAMA_CUDA_IMAGE}:${LLAMA_CUDA_VERSION}-devel-ubuntu24.04"
+: "${REPO_GIT_REF:="$(git_get_current_ref)"}"
+: "${LLAMA_IMAGE:="docker.io/mixa3607/llama.cpp-sm120"}"
+: "${LLAMA_CUDA_VERSION:="13.3.0-cudnn"}"
+: "${LLAMA_CUDA_IMAGE:="docker.io/nvidia/cuda"}"
+: "${LLAMA_CUDA_ARCH:="120"}"
+: "${LLAMA_REPO:="https://github.com/ggml-org/llama.cpp.git"}"
+: "${LLAMA_BRANCH:="master"}"
+: "${LLAMA_COMMIT:=""}"
+: "${LLAMA_CCACHE_MAXSIZE:="2G"}"
+: "${LLAMA_IS_RELEASE:="0"}"
+: "${LLAMA_PATCH:="empty.patch"}"
+: "${LLAMA_PUSH:="1"}"
+: "${LLAMA_BASE_IMAGE:="${LLAMA_CUDA_IMAGE}:${LLAMA_CUDA_VERSION}-devel-ubuntu24.04"}"
+
 if [ "$LLAMA_IS_RELEASE" == "1" ]; then
   IMAGE_TAGS=(
     "${LLAMA_IMAGE}:${LLAMA_PRESET_NAME}-${REPO_GIT_REF}"
@@ -16,66 +31,65 @@ else
   )
 fi
 
-declare -A IMAGE_ANNOTATIONS
-IMAGE_ANNOTATIONS["org.opencontainers.image.created"]="$(date --rfc-3339=seconds)"
-IMAGE_ANNOTATIONS["org.opencontainers.image.authors"]="mixa3607"
-IMAGE_ANNOTATIONS["org.opencontainers.image.source"]="https://github.com/mixa3607/ML-sm120/tree/${REPO_GIT_REF}/llama.cpp"
-IMAGE_ANNOTATIONS["org.opencontainers.image.version"]="${REPO_GIT_REF}"
-IMAGE_ANNOTATIONS["org.opencontainers.image.title"]="Llama.cpp sm120"
-IMAGE_ANNOTATIONS["org.opencontainers.image.base.name"]="${LLAMA_BASE_IMAGE}"
+function check {
+  build_check_image "${IMAGE_TAGS[0]}" "${LLAMA_FORCE_BUILD:-0}"
+}
 
-echo "Start building llama.cpp image..."
-echo "LLAMA_REPO:       ${LLAMA_REPO}"
-echo "LLAMA_BRANCH:     ${LLAMA_BRANCH}"
-echo "LLAMA_COMMIT:     ${LLAMA_COMMIT}"
-echo "LLAMA_CODE_PATH:  ${LLAMA_CODE_PATH}"
-echo "LLAMA_PATCH:      ${LLAMA_PATCH}"
-echo "CUDA_VERSION:     ${LLAMA_CUDA_VERSION}"
-echo "CUDA_ARCH:        ${LLAMA_CUDA_ARCH}"
-echo "CCACHE_MAXSIZE:   ${LLAMA_CCACHE_MAXSIZE}"
-echo "IS_RELEASE:       ${LLAMA_IS_RELEASE}"
+function build {
+  build_require_images "$LLAMA_BASE_IMAGE"
 
-DOCKER_EXTRA_ARGS=()
-for (( i=0; i<${#IMAGE_TAGS[@]}; i++ )); do
-  echo "TAG:          ${IMAGE_TAGS[$i]}"
-  DOCKER_EXTRA_ARGS+=("--tag" "${IMAGE_TAGS[$i]}")
-done
-for key in "${!IMAGE_ANNOTATIONS[@]}"; do
-  echo "ANNOTATION:   ${key}: ${IMAGE_ANNOTATIONS[$key]}"
-  DOCKER_EXTRA_ARGS+=("--annotation" "${key}=${IMAGE_ANNOTATIONS[$key]}")
-done
+  local -A IMAGE_ANNOTATIONS
+  IMAGE_ANNOTATIONS["org.opencontainers.image.created"]="$(date --rfc-3339=seconds)"
+  IMAGE_ANNOTATIONS["org.opencontainers.image.authors"]="mixa3607"
+  IMAGE_ANNOTATIONS["org.opencontainers.image.source"]="https://github.com/mixa3607/ML-sm120/tree/${REPO_GIT_REF}/llama.cpp"
+  IMAGE_ANNOTATIONS["org.opencontainers.image.version"]="${REPO_GIT_REF}"
+  IMAGE_ANNOTATIONS["org.opencontainers.image.title"]="Llama.cpp sm120"
+  IMAGE_ANNOTATIONS["org.opencontainers.image.base.name"]="${LLAMA_BASE_IMAGE}"
 
-if docker_image_pushed ${IMAGE_TAGS[0]}; then
-  echo -n "${IMAGE_TAGS[0]} already in registry. "
-  if [ "$LLAMA_FORCE_BUILD" == "1" ]; then
-    echo "Force build..."
-  else
-    echo "Skip."
-    exit 0
-  fi
-fi
+  print INFO "Start building llama.cpp image..."
+  print INFO "LLAMA_REPO:       ${LLAMA_REPO}"
+  print INFO "LLAMA_BRANCH:     ${LLAMA_BRANCH}"
+  print INFO "LLAMA_COMMIT:     ${LLAMA_COMMIT}"
+  print INFO "LLAMA_CODE_PATH:  ${LLAMA_CODE_PATH}"
+  print INFO "LLAMA_PATCH:      ${LLAMA_PATCH}"
+  print INFO "CUDA_VERSION:     ${LLAMA_CUDA_VERSION}"
+  print INFO "CUDA_ARCH:        ${LLAMA_CUDA_ARCH}"
+  print INFO "CCACHE_MAXSIZE:   ${LLAMA_CCACHE_MAXSIZE}"
+  print INFO "IS_RELEASE:       ${LLAMA_IS_RELEASE}"
 
-DOCKER_EXTRA_ARGS+=(
-  --build-arg BASE_CUDA_IMAGE="${LLAMA_BASE_IMAGE}"
-  --build-arg CUDA_ARCH="${LLAMA_CUDA_ARCH}"
-  --build-arg LLAMACPP_REPO="${LLAMA_REPO}"
-  --build-arg LLAMACPP_BRANCH="${LLAMA_BRANCH}"
-  --build-arg LLAMACPP_COMMIT="${LLAMA_COMMIT}"
-  --build-arg LLAMACPP_CODE_PATH="${LLAMA_CODE_PATH}"
-  --build-arg LLAMACPP_PATCH="${LLAMA_PATCH}"
-  --build-arg CCACHE_MAXSIZE="${LLAMA_CCACHE_MAXSIZE}"
-  --progress plain
-  --target final
-  --file ./build-image.Dockerfile
-  --pull
-)
+  local -a DOCKER_EXTRA_ARGS=()
+  local i key
+  for (( i=0; i<${#IMAGE_TAGS[@]}; i++ )); do
+    print INFO "TAG:          ${IMAGE_TAGS[$i]}"
+    DOCKER_EXTRA_ARGS+=("--tag" "${IMAGE_TAGS[$i]}")
+  done
+  for key in "${!IMAGE_ANNOTATIONS[@]}"; do
+    print INFO "ANNOTATION:   ${key}: ${IMAGE_ANNOTATIONS[$key]}"
+    DOCKER_EXTRA_ARGS+=("--annotation" "${key}=${IMAGE_ANNOTATIONS[$key]}")
+  done
 
-if [ "$LLAMA_PUSH" == "1" ]; then
   DOCKER_EXTRA_ARGS+=(
-    --push
+    --build-arg BASE_CUDA_IMAGE="${LLAMA_BASE_IMAGE}"
+    --build-arg CUDA_ARCH="${LLAMA_CUDA_ARCH}"
+    --build-arg LLAMACPP_REPO="${LLAMA_REPO}"
+    --build-arg LLAMACPP_BRANCH="${LLAMA_BRANCH}"
+    --build-arg LLAMACPP_COMMIT="${LLAMA_COMMIT}"
+    --build-arg LLAMACPP_CODE_PATH="${LLAMA_CODE_PATH}"
+    --build-arg LLAMACPP_PATCH="${LLAMA_PATCH}"
+    --build-arg CCACHE_MAXSIZE="${LLAMA_CCACHE_MAXSIZE}"
+    --progress plain
+    --target final
+    --file ./build-image.Dockerfile
+    --pull
   )
-fi
 
-mkdir -p ./logs || true
-echo "Build llama.cpp"
-docker buildx build "${DOCKER_EXTRA_ARGS[@]}" ./build-context 2>&1 | tee ./logs/build_$(date +%Y%m%d%H%M%S).log
+  if [ "$LLAMA_PUSH" == "1" ]; then
+    DOCKER_EXTRA_ARGS+=(--push)
+  fi
+
+  mkdir -p ./logs
+  print INFO "Build llama.cpp"
+  docker buildx build "${DOCKER_EXTRA_ARGS[@]}" ./build-context 2>&1 | tee "./logs/build_$(date +%Y%m%d%H%M%S).log"
+}
+
+build_dispatch check build "$@"

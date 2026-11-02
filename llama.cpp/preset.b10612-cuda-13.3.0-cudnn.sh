@@ -1,5 +1,0 @@
-#!/bin/bash
-
-export LLAMA_CUDA_VERSION='13.3.0-cudnn'
-export LLAMA_BRANCH='b10612'
-export LLAMA_PRESET_NAME="${LLAMA_BRANCH}-cuda-${LLAMA_CUDA_VERSION}"
