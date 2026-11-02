@@ -76,6 +76,7 @@ Commands: [`check` / `build`](../.build/README.md).
 | `COMFYUI_COMMIT`          | empty                                                                             |
 | `SAGEATTENTION_REPO`      | `https://github.com/thu-ml/SageAttention.git`                                     |
 | `SAGEATTENTION_REF`       | `v2.2.0`, shared by both wheels                                                   |
+| `SAGEATTENTION_MAX_JOBS`  | `2`, compilation jobs for both SageAttention wheels                               |
 | `COMFYUI_IS_RELEASE`      | `0`                                                                               |
 | `COMFYUI_PUSH`            | `1`                                                                               |
 | `COMFYUI_FORCE_BUILD`     | unset; `1` forces rebuild                                                         |
@@ -83,6 +84,13 @@ Commands: [`check` / `build`](../.build/README.md).
 
 SageAttention is built with the matching CUDA toolkit in a separate stage;
 the final image uses the PyTorch runtime base.
+
+The default compilation parallelism limits memory use on CI runners. On a
+builder with enough RAM, override it for both SageAttention 2 and 3:
+
+```bash
+SAGEATTENTION_MAX_JOBS=32 COMFYUI_PUSH=0 ./build-and-push.image.sh build
+```
 
 Release tags (`COMFYUI_IS_RELEASE=1`), omitting the `COMFYUI_` variable prefix:
 

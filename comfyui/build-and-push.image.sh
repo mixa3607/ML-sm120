@@ -16,6 +16,7 @@ source ../.build/build-common.sh
 : "${COMFYUI_COMMIT:=""}"
 : "${SAGEATTENTION_REPO:="https://github.com/thu-ml/SageAttention.git"}"
 : "${SAGEATTENTION_REF:="v2.2.0"}"
+: "${SAGEATTENTION_MAX_JOBS:="2"}"
 : "${COMFYUI_PUSH:="1"}"
 : "${COMFYUI_IS_RELEASE:="0"}"
 : "${COMFYUI_BASE_IMAGE:="${COMFYUI_TORCH_IMAGE}:${COMFYUI_PYTORCH_VERSION}-cuda${COMFYUI_CUDA_VERSION}-runtime"}"
@@ -57,6 +58,7 @@ function build {
   print INFO "CUDA_VERSION:  ${COMFYUI_CUDA_VERSION}"
   print INFO "TORCH_VERSION: ${COMFYUI_PYTORCH_VERSION}"
   print INFO "SAGEATTENTION: ${SAGEATTENTION_REPO} (${SAGEATTENTION_REF})"
+  print INFO "SAGE_MAX_JOBS: ${SAGEATTENTION_MAX_JOBS}"
   print INFO "IS_RELEASE:    ${COMFYUI_IS_RELEASE}"
 
   local -a DOCKER_EXTRA_ARGS=()
@@ -77,6 +79,7 @@ function build {
     --build-arg COMFY_COMMIT="${COMFYUI_COMMIT}"
     --build-arg SAGEATTENTION_REPO="${SAGEATTENTION_REPO}"
     --build-arg SAGEATTENTION_REF="${SAGEATTENTION_REF}"
+    --build-arg SAGEATTENTION_MAX_JOBS="${SAGEATTENTION_MAX_JOBS}"
     --build-arg CUDA_TOOLKIT_PACKAGE="cuda-toolkit-${CUDA_TOOLKIT_VERSION//./-}"
     --progress plain
     --target final

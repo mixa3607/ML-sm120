@@ -5,6 +5,7 @@ ARG COMFY_BRANCH="master"
 ARG COMFY_COMMIT=""
 ARG SAGEATTENTION_REPO="https://github.com/thu-ml/SageAttention.git"
 ARG SAGEATTENTION_REF="v2.2.0"
+ARG SAGEATTENTION_MAX_JOBS="2"
 ARG CUDA_TOOLKIT_PACKAGE="cuda-toolkit-13-2"
 
 ############# Base image #############
@@ -49,7 +50,8 @@ RUN git clone --depth 1 --branch ${SAGEATTENTION_REF} ${SAGEATTENTION_REPO} .
 # SageAttention v2.2.0 hardcodes C++17, while PyTorch 2.14 headers require C++20.
 RUN sed -i 's/-std=c++17/-std=c++20/g' setup.py sageattention3_blackwell/setup.py
 # SageAttention defaults MAX_JOBS to 32, which can exhaust memory on hosted CI runners.
-ENV TORCH_CUDA_ARCH_LIST="12.0" CUDA_HOME="/usr/local/cuda" MAX_JOBS="2" EXT_PARALLEL="1"
+ARG SAGEATTENTION_MAX_JOBS
+ENV TORCH_CUDA_ARCH_LIST="12.0" CUDA_HOME="/usr/local/cuda" MAX_JOBS="${SAGEATTENTION_MAX_JOBS}" EXT_PARALLEL="1"
 RUN python3 -m pip wheel --no-deps --no-build-isolation --wheel-dir /wheels .
 WORKDIR /files/sageattention/sageattention3_blackwell
 # SageAttention3's setup.py probes the local GPU; select sm120 without requiring a GPU on the builder.
