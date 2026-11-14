@@ -30,7 +30,7 @@ daemon. The default command checks the output tag before building.
 | `BASALT_RUNTIME_IMAGE` | `$BASALT_CUDA_IMAGE:$BASALT_CUDA_VERSION-runtime-ubuntu24.04` |
 | `BASALT_REPO` | `https://github.com/jesdga95/basalt.git` |
 | `BASALT_BRANCH` | `v0.3.2`; accepts a branch or tag |
-| `BASALT_COMMIT` | empty; if set, fetch this commit instead of the branch/tag |
+| `BASALT_COMMIT` | empty; if set, check out this commit after cloning `BASALT_BRANCH` |
 | `BASALT_BUILD_JOBS` | `4`; limits compiler memory use |
 | `BASALT_CCACHE_MAXSIZE` | `2G` (BuildKit cache) |
 | `BASALT_PRESET_NAME` | `$BASALT_COMMIT-cuda-$BASALT_CUDA_VERSION`, or `$BASALT_BRANCH-cuda-$BASALT_CUDA_VERSION` with `/` replaced by `-` |
@@ -46,6 +46,9 @@ The CUDA 13.4.3 stack and runtime layout follow upstream's Dockerfile. The final
 image uses the CUDA runtime, not the development toolkit. Python dependencies
 use upstream's pinned requirements. Source SHA is printed during the build and
 saved as `/opt/basalt/REVISION`; use `BASALT_COMMIT` for an immutable source pin.
+Cloning follows the ComfyUI build: a shallow clone of `BASALT_BRANCH`, then an
+optional commit checkout. The pinned commit must be available in that clone;
+`--depth 1` does not fetch older commits in the branch history.
 Base tags and OS package repositories are not digest/snapshot-pinned.
 
 For private test images, source [`../.build/.env-local.sh`](../.build/.env-local.sh)

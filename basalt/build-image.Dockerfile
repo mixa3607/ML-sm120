@@ -13,12 +13,9 @@ ARG BASALT_REPO="https://github.com/jesdga95/basalt.git"
 ARG BASALT_BRANCH="v0.3.2"
 ARG BASALT_COMMIT=""
 WORKDIR /opt/basalt
-# Fetch the requested commit directly so pins outside the shallow branch work too.
-RUN git init . && \
-    git remote add origin "${BASALT_REPO}" && \
-    git fetch --depth 1 origin "${BASALT_COMMIT:-${BASALT_BRANCH}}" && \
-    git checkout --detach FETCH_HEAD && \
-    git rev-parse HEAD | tee REVISION
+RUN git clone --depth 1 --recurse-submodules --shallow-submodules --jobs 4 --branch "${BASALT_BRANCH}" "${BASALT_REPO}" .
+RUN if [ "$BASALT_COMMIT" != "" ]; then git checkout "$BASALT_COMMIT"; fi
+RUN git rev-parse HEAD | tee REVISION
 
 ARG CUDA_ARCH="120"
 ARG BUILD_JOBS="4"
@@ -36,6 +33,9 @@ RUN --mount=type=cache,target=/ccache \
 RUN python3 -m venv .venv && \
     .venv/bin/pip install --no-cache-dir -r requirements.txt && \
     .venv/bin/pip check
+# Keep only the runtime tree, without sources, Git metadata, or build intermediates.
+RUN mkdir /runtime && \
+    mv .venv bin serve tools data requirements.txt REVISION LICENSE THIRD_PARTY_LICENSES /runtime/
 
 ############# Runtime #############
 FROM ${RUNTIME_CUDA_IMAGE} AS final
@@ -45,12 +45,7 @@ RUN apt-get update && \
 
 WORKDIR /opt/basalt
 # Keep the upstream install layout: the engine locates Python and data beside bin/.
-COPY --from=builder /opt/basalt/.venv /opt/basalt/.venv
-COPY --from=builder /opt/basalt/bin /opt/basalt/bin
-COPY --from=builder /opt/basalt/serve /opt/basalt/serve
-COPY --from=builder /opt/basalt/tools /opt/basalt/tools
-COPY --from=builder /opt/basalt/data /opt/basalt/data
-COPY --from=builder /opt/basalt/requirements.txt /opt/basalt/REVISION /opt/basalt/LICENSE /opt/basalt/THIRD_PARTY_LICENSES /opt/basalt/
+COPY --from=builder /runtime/ /opt/basalt/
 
 ENV HOME=/data PYTHONUNBUFFERED=1 PATH=/opt/basalt/bin:$PATH
 EXPOSE 8080
