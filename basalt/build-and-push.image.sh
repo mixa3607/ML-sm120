@@ -12,7 +12,7 @@ source ../.build/build-common.sh
 : "${BASALT_CUDA_VERSION:="13.4.3"}"
 : "${BASALT_CUDA_ARCH:="120"}"
 : "${BASALT_REPO:="https://github.com/jesdga95/basalt.git"}"
-: "${BASALT_BRANCH:="v0.3.2"}"
+: "${BASALT_BRANCH:="v0.4.0"}"
 : "${BASALT_COMMIT:=""}"
 : "${BASALT_BUILD_JOBS:="4"}"
 : "${BASALT_CCACHE_MAXSIZE:="2G"}"

@@ -10,7 +10,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 ARG BASALT_REPO="https://github.com/jesdga95/basalt.git"
-ARG BASALT_BRANCH="v0.3.2"
+ARG BASALT_BRANCH="v0.4.0"
 ARG BASALT_COMMIT=""
 WORKDIR /opt/basalt
 RUN git clone --depth 1 --recurse-submodules --shallow-submodules --jobs 4 --branch "${BASALT_BRANCH}" "${BASALT_REPO}" .

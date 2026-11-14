@@ -73,9 +73,9 @@ class BuildTests(unittest.TestCase):
         ])
         build = calls[-1]
         self.assertEqual(build[:2], ["buildx", "build"])
-        for arg in ["CUDA_ARCH=120", "BASALT_BRANCH=v0.3.2", "BUILD_JOBS=4",
+        for arg in ["CUDA_ARCH=120", "BASALT_BRANCH=v0.4.0", "BUILD_JOBS=4",
                     "CCACHE_MAXSIZE=2G", "linux/amd64",
-                    "test/basalt:v0.3.2-cuda-13.4.3-test-pre"]:
+                    "test/basalt:v0.4.0-cuda-13.4.3-test-pre"]:
             self.assertIn(arg, build)
         self.assertNotIn("--push", build)
 
@@ -118,7 +118,7 @@ class BuildTests(unittest.TestCase):
 
     def test_check_missing_image(self):
         result = self.run_script("check", MISSING_IMAGES=json.dumps([
-            "test/basalt:v0.3.2-cuda-13.4.3-test-pre",
+            "test/basalt:v0.4.0-cuda-13.4.3-test-pre",
         ]))
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout, "true\n")
@@ -143,7 +143,7 @@ class BuildTests(unittest.TestCase):
 
     def test_default_builds_missing_image(self):
         result = self.run_script(MISSING_IMAGES=json.dumps([
-            "test/basalt:v0.3.2-cuda-13.4.3-test-pre",
+            "test/basalt:v0.4.0-cuda-13.4.3-test-pre",
         ]))
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.docker_calls()[-1][:2], ["buildx", "build"])

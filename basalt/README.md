@@ -29,7 +29,7 @@ daemon. The default command checks the output tag before building.
 | `BASALT_BASE_IMAGE` | `$BASALT_CUDA_IMAGE:$BASALT_CUDA_VERSION-devel-ubuntu24.04` |
 | `BASALT_RUNTIME_IMAGE` | `$BASALT_CUDA_IMAGE:$BASALT_CUDA_VERSION-runtime-ubuntu24.04` |
 | `BASALT_REPO` | `https://github.com/jesdga95/basalt.git` |
-| `BASALT_BRANCH` | `v0.3.2`; accepts a branch or tag |
+| `BASALT_BRANCH` | `v0.4.0`; accepts a branch or tag |
 | `BASALT_COMMIT` | empty; if set, check out this commit after cloning `BASALT_BRANCH` |
 | `BASALT_BUILD_JOBS` | `4`; limits compiler memory use |
 | `BASALT_CCACHE_MAXSIZE` | `2G` (BuildKit cache) |
